@@ -71,10 +71,52 @@
     <div class="page active" id="page-discover">
       <div class="page-header">
         <h2>Discover Stories</h2>
-        <p>Find viral Reddit stories and rank them with AI</p>
+        <p>Generate original viral stories with AI or scrape from Reddit</p>
       </div>
 
-      <div class="card">
+      <!-- Mode toggle -->
+      <div class="tabs mb-16">
+        <div class="tab active" id="tabAiGen" onclick="switchDiscoverMode('ai', this)">AI Generate</div>
+        <div class="tab" id="tabReddit" onclick="switchDiscoverMode('reddit', this)">Reddit Scrape</div>
+      </div>
+
+      <!-- AI Generate Card -->
+      <div class="card" id="cardAiGen">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Generate Stories</div>
+            <div class="card-subtitle">Claude writes original viral stories — no Reddit needed</div>
+          </div>
+          <button class="btn btn-primary" id="btnAiGen" onclick="generateAiStories()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/></svg>
+            Generate
+          </button>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Style</label>
+            <select class="form-select" id="aiStyle">
+              <option value="mixed">Mixed (best variety)</option>
+              <option value="revenge">Revenge / Payback</option>
+              <option value="drama">Drama / Confessions</option>
+              <option value="horror">Creepy / Horror</option>
+              <option value="wholesome">Wholesome</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Count</label>
+            <select class="form-select" id="aiCount">
+              <option value="3">3 stories</option>
+              <option value="5" selected>5 stories</option>
+              <option value="8">8 stories</option>
+              <option value="10">10 stories</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reddit Scrape Card (hidden by default) -->
+      <div class="card hidden" id="cardReddit">
         <div class="card-header">
           <div>
             <div class="card-title">Scrape Reddit</div>
@@ -120,16 +162,16 @@
       <div class="toolbar">
         <div class="toolbar-info" id="storyCount">No stories loaded</div>
         <div class="toolbar-actions">
-          <button class="btn btn-ghost btn-sm" onclick="loadCachedStories()">Load Cached</button>
+          <button class="btn btn-ghost btn-sm hidden" id="btnLoadCached" onclick="loadCachedStories()">Load Cached</button>
           <button class="btn btn-primary btn-sm" id="btnRank" onclick="rankStories()" disabled>AI Rank</button>
         </div>
       </div>
 
       <div id="storyList" class="story-list">
         <div class="empty-state">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/></svg>
           <h3>No stories yet</h3>
-          <p>Click Scrape to find viral Reddit stories, or load previously cached results.</p>
+          <p>Hit Generate to create original viral stories with AI, or switch to Reddit Scrape.</p>
         </div>
       </div>
     </div>

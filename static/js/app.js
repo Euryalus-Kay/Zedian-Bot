@@ -127,7 +127,50 @@ function setBadge(id, text, type) {
   }
 }
 
-// ─── Story Discovery ─────────────────────────────────────────────────────────
+// ─── Discover Mode Toggle ────────────────────────────────────────────────────
+
+let discoverMode = 'ai';
+
+function switchDiscoverMode(mode, tabEl) {
+  discoverMode = mode;
+  document.querySelectorAll('#page-discover > .tabs .tab').forEach(t => t.classList.remove('active'));
+  if (tabEl) tabEl.classList.add('active');
+
+  document.getElementById('cardAiGen').classList.toggle('hidden', mode !== 'ai');
+  document.getElementById('cardReddit').classList.toggle('hidden', mode !== 'reddit');
+  document.getElementById('btnLoadCached').classList.toggle('hidden', mode !== 'reddit');
+}
+
+// ─── AI Story Generation ─────────────────────────────────────────────────────
+
+async function generateAiStories() {
+  const btn = document.getElementById('btnAiGen');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner spinner-sm"></div> Generating...';
+
+  try {
+    const style = document.getElementById('aiStyle').value;
+    const count = parseInt(document.getElementById('aiCount').value);
+
+    const data = await apiPost('/api/stories/generate', { style, count });
+
+    if (data.status === 'ok') {
+      currentStories = data.stories;
+      renderStories(currentStories, true);
+      toast(`Generated ${data.count} stories`, 'success');
+      document.getElementById('btnRank').disabled = false;
+    } else {
+      toast(data.message || 'Generation failed. Check Claude API key.', 'error');
+    }
+  } catch (e) {
+    toast('Error: ' + e.message, 'error');
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/></svg> Generate';
+}
+
+// ─── Reddit Story Discovery ──────────────────────────────────────────────────
 
 async function scrapeStories() {
   const btn = document.getElementById('btnScrape');

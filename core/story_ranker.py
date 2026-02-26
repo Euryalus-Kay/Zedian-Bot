@@ -1,7 +1,8 @@
-"""AI-powered story ranker using Claude to find the most viral stories."""
+"""AI-powered story ranker and generator using Claude."""
 
 import json
 import logging
+import time
 
 import anthropic
 
@@ -17,6 +18,106 @@ class StoryRanker:
         self.client = None
         if Config.ANTHROPIC_API_KEY:
             self.client = anthropic.Anthropic(api_key=Config.ANTHROPIC_API_KEY)
+
+    def generate_ai_stories(self, count: int = 5, style: str = "mixed") -> list[dict]:
+        """Generate original viral stories using Claude (no Reddit needed).
+
+        Each story consists of a short AskReddit-style question followed by
+        a wild top-answer story (revenge, drama, payback, horror, etc.).
+
+        Args:
+            count: How many stories to generate.
+            style: One of 'revenge', 'horror', 'drama', 'wholesome', 'mixed'.
+
+        Returns:
+            List of story dicts matching the Reddit scraper format.
+        """
+        if not self.client:
+            logger.warning("Claude API not configured.")
+            return []
+
+        style_guides = {
+            "revenge": "petty revenge, pro revenge, nuclear revenge, karma payback, satisfying comeuppance",
+            "horror": "creepy encounters, unexplained events, true scary stories, paranormal, unsettling",
+            "drama": "relationship betrayal, family secrets, workplace drama, shocking confessions",
+            "wholesome": "unexpected kindness, heartwarming twists, faith in humanity restored",
+            "mixed": "a mix of revenge, drama, horror, confessions, and wild true stories",
+        }
+
+        vibe = style_guides.get(style, style_guides["mixed"])
+
+        prompt = f"""You are the internet's best viral storyteller. Generate {count} completely original short stories perfect for TikTok/YouTube Shorts narration (30-55 seconds each, under 150 words).
+
+FORMAT FOR EACH STORY:
+- A short punchy AskReddit-style question as the TITLE (like "What's the worst thing a coworker has done to you?" or "What secret did you find out that ruined everything?")
+- Then a wild, dramatic first-person story as the answer
+
+STYLE: {vibe}
+
+RULES:
+- Stories must feel REAL and specific — like an actual Reddit post
+- Each story needs an insane hook in the first sentence
+- Build tension fast, deliver a jaw-dropping payoff
+- Use conversational tone (contractions, natural speech)
+- Keep each story between 100-150 words
+- Make readers want to comment and share
+- No emojis, no "Hey guys", no meta commentary
+- Each story should feel completely different from the others
+- DO NOT use cliche phrases like "plot twist" or "and that's when everything changed"
+
+Return ONLY a JSON array. Each element must have:
+- "title": the AskReddit-style question
+- "selftext": the full story (first-person answer)
+- "subreddit": pick a fitting one from [pettyrevenge, ProRevenge, NuclearRevenge, tifu, confessions, TrueOffMyChest, AmItheAsshole, nosleep, relationship_advice, MaliciousCompliance]
+- "hook": the killer opening line that should be spoken first in the video
+- "viral_score": your honest rating 1-100 of how viral this would go
+
+Return ONLY the JSON array, no other text."""
+
+        try:
+            response = self.client.messages.create(
+                model=Config.CLAUDE_MODEL,
+                max_tokens=4096,
+                messages=[{"role": "user", "content": prompt}],
+            )
+
+            text = response.content[0].text.strip()
+            if text.startswith("```"):
+                text = text.split("\n", 1)[1].rsplit("```", 1)[0]
+
+            raw_stories = json.loads(text)
+
+            # Normalise into the same dict shape the scraper produces
+            stories = []
+            for i, s in enumerate(raw_stories):
+                stories.append({
+                    "id": f"ai_{int(time.time())}_{i}",
+                    "title": s["title"],
+                    "selftext": s["selftext"],
+                    "subreddit": s.get("subreddit", "Generated"),
+                    "score": 0,
+                    "upvote_ratio": 1.0,
+                    "num_comments": 0,
+                    "url": "",
+                    "created_utc": int(time.time()),
+                    "author": "AI",
+                    "is_self": True,
+                    "over_18": False,
+                    "awards": 0,
+                    "scraped_at": None,
+                    "ai_generated": True,
+                    "hook": s.get("hook", ""),
+                    "viral_score": s.get("viral_score", 80),
+                    "viral_reason": "AI-generated viral story",
+                    "estimated_duration": min(55, max(25, len(s["selftext"].split()) // 3)),
+                })
+
+            logger.info("Generated %d AI stories (style=%s).", len(stories), style)
+            return stories
+
+        except Exception as e:
+            logger.error("AI story generation failed: %s", e)
+            return []
 
     def rank_stories(self, stories: list[dict], top_n: int = 10) -> list[dict]:
         """Rank stories by viral potential using Claude.

@@ -89,6 +89,23 @@ def cached_stories():
     return jsonify({"status": "ok", "count": len(stories), "stories": stories})
 
 
+@app.route("/api/stories/generate", methods=["POST"])
+def generate_ai_stories():
+    """Generate original viral stories with Claude (no Reddit needed)."""
+    data = request.get_json(silent=True) or {}
+    count = min(data.get("count", 5), 10)
+    style = data.get("style", "mixed")
+
+    stories = ranker.generate_ai_stories(count=count, style=style)
+
+    if stories:
+        return jsonify({"status": "ok", "count": len(stories), "stories": stories})
+    return jsonify({
+        "status": "error",
+        "message": "Story generation failed. Check your Claude API key.",
+    }), 500
+
+
 @app.route("/api/stories/rank", methods=["POST"])
 def rank_stories():
     """Rank stories by viral potential using AI."""
