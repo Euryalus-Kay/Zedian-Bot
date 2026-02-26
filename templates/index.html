@@ -27,7 +27,11 @@
     </div>
 
     <div class="nav-items">
-      <div class="nav-item active" data-page="discover" onclick="showPage('discover')">
+      <div class="nav-item active" data-page="autopilot" onclick="showPage('autopilot')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        Autopilot
+      </div>
+      <div class="nav-item" data-page="discover" onclick="showPage('discover')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
         Discover
       </div>
@@ -67,8 +71,116 @@
   <!-- Main Content -->
   <main class="main">
 
+    <!-- ═══ AUTOPILOT PAGE ═══ -->
+    <div class="page active" id="page-autopilot">
+      <div class="page-header">
+        <h2>Autopilot</h2>
+        <p>One click: AI writes a story, narrates it, makes a video, uploads to YouTube</p>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Full Auto Mode</div>
+            <div class="card-subtitle">Story + Script + Voice + Video + Upload &mdash; all automatic</div>
+          </div>
+        </div>
+
+        <div class="form-row-3">
+          <div class="form-group">
+            <label class="form-label">Story Style</label>
+            <select class="form-select" id="autoStyle">
+              <option value="mixed">Mixed</option>
+              <option value="revenge">Revenge / Payback</option>
+              <option value="drama">Drama / Confessions</option>
+              <option value="horror">Creepy / Horror</option>
+              <option value="wholesome">Wholesome</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Voice</label>
+            <select class="form-select" id="autoVoice"></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Background</label>
+            <select class="form-select" id="autoBg">
+              <option value="">Random</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row" style="margin-top:4px;">
+          <div class="form-group" style="display:flex;align-items:center;gap:10px;">
+            <input type="checkbox" id="autoUpload" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer;">
+            <label for="autoUpload" style="font-size:13px;color:var(--text-2);cursor:pointer;">Upload to YouTube when done</label>
+          </div>
+          <div class="form-group" id="autoPrivacyGroup" style="display:none;">
+            <label class="form-label">Privacy</label>
+            <select class="form-select" id="autoPrivacy">
+              <option value="public">Public</option>
+              <option value="unlisted">Unlisted</option>
+              <option value="private">Private</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="margin-top:12px;">
+          <button class="btn btn-primary" id="btnAutopilot" onclick="runAutopilot()" style="padding:12px 32px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            Launch Autopilot
+          </button>
+        </div>
+      </div>
+
+      <!-- Progress -->
+      <div class="card hidden" id="autoProgress">
+        <div class="card-title" id="autoProgressTitle">Working...</div>
+        <div class="progress-container">
+          <div class="progress-bar">
+            <div class="progress-fill" id="autoProgressFill" style="width:0%"></div>
+          </div>
+          <div class="progress-label">
+            <span id="autoProgressStep">Starting...</span>
+            <span id="autoProgressPercent">0%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Result -->
+      <div class="card hidden" id="autoResult">
+        <div class="card-title mb-16">Done! Your video is ready.</div>
+        <div class="video-preview-container">
+          <div class="video-frame">
+            <video id="autoPreviewVideo" controls></video>
+          </div>
+          <div class="video-actions">
+            <div class="video-detail">
+              <span class="label">Duration</span>
+              <span id="autoResultDuration">-</span>
+            </div>
+            <div class="video-detail">
+              <span class="label">Title</span>
+              <span id="autoResultTitle">-</span>
+            </div>
+            <div class="video-detail" id="autoYtRow" style="display:none;">
+              <span class="label">YouTube</span>
+              <a id="autoYtLink" href="#" target="_blank" style="color:var(--accent);text-decoration:none;">View</a>
+            </div>
+            <div class="flex flex-col gap-8 mt-16">
+              <button class="btn btn-primary w-full" onclick="autoDownload('video')">Download Video</button>
+              <button class="btn btn-ghost w-full" onclick="autoDownload('audio')">Audio Only</button>
+              <button class="btn btn-primary w-full" id="btnAutopilotAgain" onclick="runAutopilot()" style="margin-top:8px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                Make Another
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- ═══ DISCOVER PAGE ═══ -->
-    <div class="page active" id="page-discover">
+    <div class="page" id="page-discover">
       <div class="page-header">
         <h2>Discover Stories</h2>
         <p>Generate original viral stories with AI or scrape from Reddit</p>
@@ -427,46 +539,139 @@
     <div class="page" id="page-settings">
       <div class="page-header">
         <h2>Settings</h2>
-        <p>API connections and configuration</p>
+        <p>Status and full setup guide for your computer</p>
       </div>
 
       <div class="card">
-        <div class="card-title mb-16">Services</div>
+        <div class="card-title mb-16">Service Status</div>
         <div class="service-row">
-          <span>Reddit API</span>
-          <span class="badge" id="badgeReddit">Checking...</span>
-        </div>
-        <div class="service-row">
-          <span>Claude AI</span>
+          <span>Claude AI (required)</span>
           <span class="badge" id="badgeClaude">Checking...</span>
-        </div>
-        <div class="service-row">
-          <span>YouTube</span>
-          <span class="badge" id="badgeYouTube">Checking...</span>
         </div>
         <div class="service-row">
           <span>TTS Engine</span>
           <span class="badge badge-success">Always Available</span>
         </div>
+        <div class="service-row">
+          <span>Reddit API (optional)</span>
+          <span class="badge" id="badgeReddit">Checking...</span>
+        </div>
+        <div class="service-row">
+          <span>YouTube Upload</span>
+          <span class="badge" id="badgeYouTube">Checking...</span>
+        </div>
       </div>
 
       <div class="card">
-        <div class="card-title mb-16">Setup Guide</div>
-        <div class="setup-step"><strong>1. Reddit API</strong> &mdash; Go to <a href="https://www.reddit.com/prefs/apps" target="_blank">reddit.com/prefs/apps</a>, create a "script" app, add your client ID and secret to the <code>.env</code> file.</div>
-        <div class="setup-step"><strong>2. Claude AI</strong> &mdash; Get an API key from <a href="https://console.anthropic.com/" target="_blank">console.anthropic.com</a> and add it to <code>.env</code>.</div>
-        <div class="setup-step"><strong>3. YouTube</strong> &mdash; Create a project in <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a>, enable YouTube Data API v3, download <code>client_secrets.json</code> to project root.</div>
-        <div class="setup-step"><strong>4. Backgrounds</strong> &mdash; Go to the Backgrounds tab and download at least one gameplay video.</div>
-        <div class="setup-step"><strong>5. Tunnel</strong> (optional) &mdash; Set <code>CLOUDFLARE_TUNNEL=true</code> in .env for public access.</div>
+        <div class="card-title mb-16">Setup Guide &mdash; Step by Step</div>
+
+        <div class="setup-step">
+          <strong>Step 1: Install Python 3.10+</strong><br>
+          Download from <a href="https://www.python.org/downloads/" target="_blank">python.org/downloads</a>. On Mac you can also use <code>brew install python</code>. Make sure to check "Add to PATH" during install on Windows.
+        </div>
+
+        <div class="setup-step">
+          <strong>Step 2: Install FFmpeg</strong><br>
+          Required for video editing. Download from <a href="https://ffmpeg.org/download.html" target="_blank">ffmpeg.org</a>.<br>
+          <strong>Windows:</strong> Download, extract, add the <code>bin</code> folder to your system PATH.<br>
+          <strong>Mac:</strong> <code>brew install ffmpeg</code><br>
+          <strong>Linux:</strong> <code>sudo apt install ffmpeg</code>
+        </div>
+
+        <div class="setup-step">
+          <strong>Step 3: Clone and install</strong><br>
+          Open a terminal and run:
+        </div>
+        <pre class="env-block">git clone https://github.com/Euryalus-Kay/Zedian-Bot.git
+cd Zedian-Bot
+pip install -r requirements.txt</pre>
+
+        <div class="setup-step">
+          <strong>Step 4: Get a Claude API key (required)</strong><br>
+          Go to <a href="https://console.anthropic.com/" target="_blank">console.anthropic.com</a>, create an account, go to API Keys, create a new key. Copy it.
+        </div>
+
+        <div class="setup-step">
+          <strong>Step 5: Create your <code>.env</code> file</strong><br>
+          In the project folder, copy <code>.env.example</code> to <code>.env</code> and paste your key:
+        </div>
+        <pre class="env-block"># Copy .env.example to .env, then edit:
+cp .env.example .env
+
+# Required - paste your Claude key:
+ANTHROPIC_API_KEY=sk-ant-xxxxxxxxxxxx
+
+# Optional - only needed if you want Reddit scraping:
+REDDIT_CLIENT_ID=your_id
+REDDIT_CLIENT_SECRET=your_secret
+REDDIT_USER_AGENT=ViralStoryBot/1.0
+
+# Flask
+FLASK_SECRET_KEY=any-random-string-here
+FLASK_PORT=5000</pre>
+
+        <div class="setup-step">
+          <strong>Step 6: Set up YouTube upload (optional)</strong><br>
+          1. Go to <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a><br>
+          2. Create a new project (any name)<br>
+          3. Go to <strong>APIs &amp; Services</strong> &rarr; <strong>Library</strong><br>
+          4. Search "YouTube Data API v3" and click <strong>Enable</strong><br>
+          5. Go to <strong>APIs &amp; Services</strong> &rarr; <strong>Credentials</strong><br>
+          6. Click <strong>Create Credentials</strong> &rarr; <strong>OAuth client ID</strong><br>
+          7. Application type: <strong>Desktop app</strong><br>
+          8. Download the JSON file and save it as <code>client_secrets.json</code> in the project root<br>
+          9. Go to <strong>OAuth consent screen</strong>, add your Google email as a test user<br>
+          10. In the app, go to the YouTube tab and click "Connect YouTube"
+        </div>
+
+        <div class="setup-step">
+          <strong>Step 7: Download a background video</strong><br>
+          Go to the <strong>Backgrounds</strong> tab in this app and download at least one gameplay video (Minecraft Parkour, Subway Surfers, etc.). This is used behind the captions.
+        </div>
+
+        <div class="setup-step">
+          <strong>Step 8: Run the app</strong>
+        </div>
+        <pre class="env-block">python app.py
+
+# Then open http://localhost:5000 in your browser</pre>
+
+        <div class="setup-step">
+          <strong>Step 9: Go to Autopilot and hit Launch!</strong><br>
+          Pick a style, and the bot will write a story, narrate it, add captions and background, and optionally upload it to YouTube. Fully automatic.
+        </div>
       </div>
 
       <div class="card">
-        <div class="card-title mb-12">Environment File</div>
-        <p class="text-sm text-muted mb-12">Copy <code>.env.example</code> to <code>.env</code> and fill in:</p>
-        <pre class="env-block">REDDIT_CLIENT_ID=your_client_id
-REDDIT_CLIENT_SECRET=your_client_secret
-ANTHROPIC_API_KEY=your_api_key
-FLASK_SECRET_KEY=random-secret
-CLOUDFLARE_TUNNEL=false</pre>
+        <div class="card-title mb-12">What you need vs what's optional</div>
+        <div class="service-row">
+          <span><strong>Claude API key</strong></span>
+          <span style="color:var(--red);font-size:13px;">Required</span>
+        </div>
+        <div class="service-row">
+          <span><strong>FFmpeg</strong></span>
+          <span style="color:var(--red);font-size:13px;">Required</span>
+        </div>
+        <div class="service-row">
+          <span><strong>Python 3.10+</strong></span>
+          <span style="color:var(--red);font-size:13px;">Required</span>
+        </div>
+        <div class="service-row">
+          <span><strong>Background video</strong></span>
+          <span style="color:var(--red);font-size:13px;">Required (download in app)</span>
+        </div>
+        <div class="service-row">
+          <span><strong>Reddit API</strong></span>
+          <span style="color:var(--text-3);font-size:13px;">Optional (AI generates stories)</span>
+        </div>
+        <div class="service-row">
+          <span><strong>YouTube credentials</strong></span>
+          <span style="color:var(--text-3);font-size:13px;">Optional (for auto-upload)</span>
+        </div>
+        <div class="service-row">
+          <span><strong>TTS (Edge TTS)</strong></span>
+          <span style="color:var(--green);font-size:13px;">Free, no setup needed</span>
+        </div>
       </div>
     </div>
 

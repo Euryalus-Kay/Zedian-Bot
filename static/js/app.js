@@ -7,6 +7,7 @@ let currentStories = [];
 let selectedStory = null;
 let currentScript = null;
 let lastGeneratedResult = null;
+let lastAutoResult = null;
 let libraryFilter = 'all';
 
 // ─── Init ────────────────────────────────────────────────────────────────────
@@ -20,6 +21,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const scriptEl = document.getElementById('scriptText');
   if (scriptEl) {
     scriptEl.addEventListener('input', updateCreateSteps);
+  }
+
+  // Show/hide privacy when upload checkbox changes
+  const autoUpload = document.getElementById('autoUpload');
+  if (autoUpload) {
+    autoUpload.addEventListener('change', () => {
+      document.getElementById('autoPrivacyGroup').style.display =
+        autoUpload.checked ? 'block' : 'none';
+    });
   }
 });
 
@@ -125,6 +135,116 @@ function setBadge(id, text, type) {
     el.textContent = text;
     el.className = `badge badge-${type}`;
   }
+}
+
+// ─── Autopilot ───────────────────────────────────────────────────────────────
+
+async function runAutopilot() {
+  const btn = document.getElementById('btnAutopilot');
+  const btnAgain = document.getElementById('btnAutopilotAgain');
+  btn.disabled = true;
+  if (btnAgain) btnAgain.disabled = true;
+  btn.innerHTML = '<div class="spinner spinner-sm"></div> Running...';
+
+  document.getElementById('autoProgress').classList.remove('hidden');
+  document.getElementById('autoResult').classList.add('hidden');
+
+  const style = document.getElementById('autoStyle').value;
+  const voice = document.getElementById('autoVoice').value;
+  const bgFile = document.getElementById('autoBg').value;
+  const upload = document.getElementById('autoUpload').checked;
+  const privacy = document.getElementById('autoPrivacy').value;
+
+  try {
+    const data = await apiPost('/api/autopilot', {
+      style,
+      voice: voice || null,
+      background_file: bgFile || null,
+      upload,
+      privacy,
+    });
+
+    if (data.status === 'ok') {
+      pollAutopilot(data.job_id);
+    } else {
+      toast(data.message || 'Autopilot failed to start', 'error');
+      resetAutopilotBtn();
+    }
+  } catch (e) {
+    toast('Error: ' + e.message, 'error');
+    resetAutopilotBtn();
+  }
+}
+
+function pollAutopilot(jobId) {
+  const interval = setInterval(async () => {
+    try {
+      const job = await apiGet(`/api/jobs/${jobId}`);
+
+      if (job.status === 'processing') {
+        const fill = document.getElementById('autoProgressFill');
+        const step = document.getElementById('autoProgressStep');
+        const pct = document.getElementById('autoProgressPercent');
+        const title = document.getElementById('autoProgressTitle');
+        if (fill) fill.style.width = `${job.progress || 0}%`;
+        if (step) step.textContent = job.step || 'Processing...';
+        if (pct) pct.textContent = `${job.progress || 0}%`;
+        if (title) title.textContent = job.step || 'Working...';
+      } else {
+        clearInterval(interval);
+        onAutopilotDone(job);
+      }
+    } catch (e) {
+      clearInterval(interval);
+      onAutopilotDone({ status: 'error', message: e.message });
+    }
+  }, 1500);
+}
+
+function onAutopilotDone(job) {
+  document.getElementById('autoProgress').classList.add('hidden');
+  resetAutopilotBtn();
+
+  if (job.status === 'complete' && job.result) {
+    lastAutoResult = job.result;
+    const r = job.result;
+
+    document.getElementById('autoResult').classList.remove('hidden');
+    document.getElementById('autoPreviewVideo').src = `/api/output/${getFilename(r.video)}`;
+    document.getElementById('autoResultDuration').textContent = `${r.duration.toFixed(1)}s`;
+    document.getElementById('autoResultTitle').textContent = r.title || 'Untitled';
+
+    // YouTube link
+    const ytRow = document.getElementById('autoYtRow');
+    const ytLink = document.getElementById('autoYtLink');
+    if (r.youtube && r.youtube.status === 'success' && r.youtube.url) {
+      ytRow.style.display = 'flex';
+      ytLink.href = r.youtube.url;
+      ytLink.textContent = r.youtube.url;
+      toast('Video uploaded to YouTube!', 'success');
+    } else {
+      ytRow.style.display = 'none';
+      toast('Video ready!', 'success');
+    }
+  } else {
+    toast(job.message || 'Autopilot failed', 'error');
+  }
+}
+
+function resetAutopilotBtn() {
+  const btn = document.getElementById('btnAutopilot');
+  const btnAgain = document.getElementById('btnAutopilotAgain');
+  btn.disabled = false;
+  if (btnAgain) btnAgain.disabled = false;
+  btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg> Launch Autopilot';
+}
+
+function autoDownload(type) {
+  if (!lastAutoResult) return;
+  let file;
+  if (type === 'video') file = lastAutoResult.video;
+  else if (type === 'audio') file = lastAutoResult.audio_only;
+  if (file) window.open(`/api/output/${getFilename(file)}`, '_blank');
 }
 
 // ─── Discover Mode Toggle ────────────────────────────────────────────────────
@@ -423,14 +543,20 @@ function pollJobStatus(jobId, onComplete) {
 async function loadVoices() {
   try {
     const data = await apiGet('/api/tts/voices');
-    const select = document.getElementById('voiceSelect');
-    select.innerHTML = '';
-    for (const [key, name] of Object.entries(data.voices)) {
-      const label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-      const opt = document.createElement('option');
-      opt.value = key;
-      opt.textContent = `${label} (${name})`;
-      select.appendChild(opt);
+    const selects = [
+      document.getElementById('voiceSelect'),
+      document.getElementById('autoVoice'),
+    ].filter(Boolean);
+
+    for (const select of selects) {
+      select.innerHTML = '';
+      for (const [key, name] of Object.entries(data.voices)) {
+        const label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        const opt = document.createElement('option');
+        opt.value = key;
+        opt.textContent = `${label} (${name})`;
+        select.appendChild(opt);
+      }
     }
   } catch (e) {
     console.error('Failed to load voices:', e);
@@ -445,12 +571,15 @@ async function loadBackgrounds() {
     const bgGrid = document.getElementById('bgList');
     const bgSelect = document.getElementById('bgSelect');
 
-    bgSelect.innerHTML = '<option value="">Random</option>';
-    for (const bg of data.backgrounds || []) {
-      const opt = document.createElement('option');
-      opt.value = bg.filename;
-      opt.textContent = `${bg.filename} (${bg.size_mb}MB)`;
-      bgSelect.appendChild(opt);
+    const bgSelects = [bgSelect, document.getElementById('autoBg')].filter(Boolean);
+    for (const sel of bgSelects) {
+      sel.innerHTML = '<option value="">Random</option>';
+      for (const bg of data.backgrounds || []) {
+        const opt = document.createElement('option');
+        opt.value = bg.filename;
+        opt.textContent = `${bg.filename} (${bg.size_mb}MB)`;
+        sel.appendChild(opt);
+      }
     }
 
     if (!data.backgrounds || data.backgrounds.length === 0) {

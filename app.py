@@ -205,6 +205,138 @@ def delete_background(filename):
     return jsonify({"status": "ok" if success else "error"})
 
 
+# ─── Autopilot: Fully Automated Pipeline ────────────────────────────────────
+
+@app.route("/api/autopilot", methods=["POST"])
+def autopilot():
+    """Fully automated: AI story -> script -> TTS -> video -> YouTube upload.
+
+    One button does everything. Runs in a background thread.
+    """
+    data = request.get_json(silent=True) or {}
+    style = data.get("style", "mixed")
+    voice = data.get("voice", None)
+    bg_file = data.get("background_file", None)
+    upload_to_yt = data.get("upload", False)
+    privacy = data.get("privacy", "public")
+
+    job_id = str(uuid.uuid4())[:8]
+    jobs[job_id] = {
+        "status": "processing",
+        "type": "autopilot",
+        "progress": 0,
+        "step": "Starting autopilot...",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+    def do_autopilot():
+        try:
+            # Step 1: Generate a story with AI
+            jobs[job_id]["step"] = "Writing story with AI..."
+            jobs[job_id]["progress"] = 5
+            stories = ranker.generate_ai_stories(count=3, style=style)
+            if not stories:
+                jobs[job_id] = {"status": "error", "message": "AI story generation failed. Check Claude API key."}
+                return
+
+            # Pick the best one (highest viral score)
+            story = max(stories, key=lambda s: s.get("viral_score", 0))
+            jobs[job_id]["step"] = f"Picked: {story['title'][:50]}..."
+            jobs[job_id]["progress"] = 15
+
+            # Step 2: Generate script
+            jobs[job_id]["step"] = "Writing narration script..."
+            jobs[job_id]["progress"] = 25
+            script_data = ranker.generate_script(story)
+            narration = script_data["script"]
+            title = script_data.get("title", story["title"][:70])
+            description = script_data.get("description", "")
+            tags = script_data.get("tags", ["reddit", "storytime", "viral"])
+
+            # Step 3: TTS
+            jobs[job_id]["step"] = "Generating voice narration..."
+            jobs[job_id]["progress"] = 40
+            if voice:
+                tts.set_voice(voice)
+            tts_result = tts.generate(narration, filename=f"auto_{job_id}")
+
+            # Step 4: Captions
+            jobs[job_id]["step"] = "Creating captions..."
+            jobs[job_id]["progress"] = 55
+            captions = caption_gen.generate_from_tts_timestamps(
+                tts_result["word_timestamps"]
+            )
+
+            # Step 5: Background
+            jobs[job_id]["step"] = "Preparing background..."
+            jobs[job_id]["progress"] = 60
+            if bg_file:
+                bg_path = os.path.join(Config.BG_VIDEOS_DIR, bg_file)
+            else:
+                bg_path = bg_manager.get_random_background()
+
+            if not bg_path or not os.path.exists(bg_path):
+                jobs[job_id] = {"status": "error", "message": "No background video. Download one in Backgrounds tab."}
+                return
+
+            # Step 6: Create video
+            jobs[job_id]["step"] = "Editing video..."
+            jobs[job_id]["progress"] = 70
+            video_result = editor.create_video(
+                audio_path=tts_result["audio_path"],
+                background_path=bg_path,
+                captions=captions,
+                output_name=f"auto_{job_id}",
+            )
+
+            # Step 7: Thumbnail
+            jobs[job_id]["step"] = "Creating thumbnail..."
+            jobs[job_id]["progress"] = 85
+            thumb_path = editor.create_thumbnail(video_result["video"])
+
+            result = {
+                **video_result,
+                "thumbnail": thumb_path,
+                "title": title,
+                "description": description,
+                "tags": tags,
+                "script": narration,
+                "story": story,
+            }
+
+            # Step 8: Upload to YouTube (if requested and authenticated)
+            if upload_to_yt and yt_uploader.is_authenticated:
+                jobs[job_id]["step"] = "Uploading to YouTube..."
+                jobs[job_id]["progress"] = 90
+                yt_result = yt_uploader.upload_video(
+                    video_path=video_result["video"],
+                    title=title,
+                    description=description,
+                    tags=tags,
+                    privacy=privacy,
+                )
+                result["youtube"] = yt_result
+                if yt_result.get("status") == "success":
+                    logger.info("Autopilot: uploaded to YouTube: %s", yt_result.get("url"))
+            elif upload_to_yt:
+                result["youtube"] = {"status": "skipped", "message": "YouTube not connected"}
+
+            jobs[job_id] = {
+                "status": "complete",
+                "progress": 100,
+                "step": "Done!",
+                "result": result,
+            }
+            logger.info("Autopilot complete: %s", job_id)
+
+        except Exception as e:
+            logger.error("Autopilot failed: %s", e)
+            jobs[job_id] = {"status": "error", "message": str(e)}
+
+    threading.Thread(target=do_autopilot, daemon=True).start()
+    return jsonify({"status": "ok", "job_id": job_id})
+
+
 # ─── Video Generation ────────────────────────────────────────────────────────
 
 @app.route("/api/generate", methods=["POST"])
