@@ -50,12 +50,16 @@ class Config:
     MAX_VIDEO_DURATION = 59  # seconds - under 60s for Shorts
 
     # Caption style
-    CAPTION_FONT_SIZE = 70
+    CAPTION_FONT_SIZE = 72
     CAPTION_FONT = "Arial-Bold"
     CAPTION_COLOR = "white"
     CAPTION_STROKE_COLOR = "black"
-    CAPTION_STROKE_WIDTH = 4
+    CAPTION_STROKE_WIDTH = 5
     CAPTION_WORDS_PER_GROUP = 3  # Words shown at a time
+    CAPTION_HIGHLIGHT = True  # Colored background box behind text
+    CAPTION_HIGHLIGHT_COLOR = (200, 15, 15)  # RGB - bold red highlight
+    CAPTION_HIGHLIGHT_OPACITY = 0.75  # 0.0 - 1.0
+    CAPTION_HIGHLIGHT_PADDING = 20  # Pixels of padding around text
 
     # YouTube
     YOUTUBE_CLIENT_SECRETS = os.getenv("YOUTUBE_CLIENT_SECRETS", "client_secrets.json")

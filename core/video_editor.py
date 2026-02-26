@@ -153,11 +153,12 @@ class VideoEditor:
         return bg
 
     def _create_caption_clips(self, captions: list[dict],
-                              video_duration: float) -> list[TextClip]:
+                              video_duration: float) -> list:
         """Create animated text caption clips for overlay.
 
         Each caption appears at the center of the screen with a bold,
-        high-contrast style typical of viral short-form content.
+        high-contrast style and colored highlight box behind the text,
+        typical of viral short-form content.
         """
         clips = []
         y_position = Config.VIDEO_HEIGHT * 0.45  # Center-ish, slightly above middle
@@ -172,9 +173,9 @@ class VideoEditor:
                 continue
 
             try:
-                # Main text
+                # Main text (bold with thick stroke)
                 txt_clip = TextClip(
-                    text=cap["text"],
+                    text=cap["text"].upper(),
                     font_size=Config.CAPTION_FONT_SIZE,
                     color=Config.CAPTION_COLOR,
                     font=Config.CAPTION_FONT,
@@ -185,6 +186,31 @@ class VideoEditor:
                     text_align="center",
                     horizontal_align="center",
                 )
+
+                if Config.CAPTION_HIGHLIGHT:
+                    # Create a colored highlight box behind the text
+                    txt_w, txt_h = txt_clip.size
+                    pad = Config.CAPTION_HIGHLIGHT_PADDING
+                    box_w = txt_w + pad * 2
+                    box_h = txt_h + pad * 2
+
+                    highlight_box = ColorClip(
+                        size=(box_w, box_h),
+                        color=Config.CAPTION_HIGHLIGHT_COLOR,
+                    )
+                    highlight_box = highlight_box.with_opacity(
+                        Config.CAPTION_HIGHLIGHT_OPACITY
+                    )
+                    highlight_box = highlight_box.with_duration(duration)
+                    highlight_box = highlight_box.with_start(cap["start"])
+
+                    # Center the box at the caption position
+                    box_x = (Config.VIDEO_WIDTH - box_w) // 2
+                    box_y = int(y_position - pad)
+                    highlight_box = highlight_box.with_position((box_x, box_y))
+
+                    clips.append(highlight_box)
+
                 txt_clip = txt_clip.with_duration(duration)
                 txt_clip = txt_clip.with_start(cap["start"])
                 txt_clip = txt_clip.with_position(("center", y_position))
