@@ -1,5 +1,12 @@
 import os
+import shutil
 from dotenv import load_dotenv
+
+# Auto-create .env from .env.example if it doesn't exist
+_env_path = os.path.join(os.path.dirname(__file__), ".env")
+_env_example = os.path.join(os.path.dirname(__file__), ".env.example")
+if not os.path.exists(_env_path) and os.path.exists(_env_example):
+    shutil.copy2(_env_example, _env_path)
 
 load_dotenv()
 

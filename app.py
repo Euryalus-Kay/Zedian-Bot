@@ -587,6 +587,48 @@ def get_settings():
     })
 
 
+@app.route("/api/settings/apikey", methods=["POST"])
+def save_api_key():
+    """Save the Anthropic API key to the .env file."""
+    data = request.get_json(silent=True) or {}
+    api_key = data.get("api_key", "").strip()
+
+    if not api_key:
+        return jsonify({"status": "error", "message": "No API key provided."}), 400
+
+    env_path = os.path.join(os.path.dirname(__file__), ".env")
+
+    # Read existing .env or start fresh
+    lines = []
+    if os.path.exists(env_path):
+        with open(env_path, "r") as f:
+            lines = f.readlines()
+
+    # Replace or add the ANTHROPIC_API_KEY line
+    found = False
+    for i, line in enumerate(lines):
+        if line.strip().startswith("ANTHROPIC_API_KEY"):
+            lines[i] = f"ANTHROPIC_API_KEY={api_key}\n"
+            found = True
+            break
+
+    if not found:
+        lines.append(f"\nANTHROPIC_API_KEY={api_key}\n")
+
+    with open(env_path, "w") as f:
+        f.writelines(lines)
+
+    # Update the running config so it takes effect immediately
+    os.environ["ANTHROPIC_API_KEY"] = api_key
+    Config.ANTHROPIC_API_KEY = api_key
+
+    # Re-initialize the ranker with the new key
+    ranker.__init__()
+
+    logger.info("API key updated via Settings UI.")
+    return jsonify({"status": "ok", "message": "API key saved. Ready to go!"})
+
+
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 
 def _get_file_type(filename: str) -> str:

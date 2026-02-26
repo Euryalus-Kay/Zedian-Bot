@@ -563,6 +563,25 @@
       </div>
 
       <div class="card">
+        <div class="card-title mb-12">Claude API Key</div>
+        <p style="font-size:13px;color:var(--text-3);margin-bottom:14px;">
+          Paste your Anthropic API key here. It saves to your local <code>.env</code> file and takes effect immediately.
+        </p>
+        <div class="form-row" style="align-items:flex-end;">
+          <div class="form-group" style="flex:1;">
+            <label class="form-label">API Key</label>
+            <input class="form-input" id="inputApiKey" type="password" placeholder="sk-ant-api03-..." autocomplete="off">
+          </div>
+          <div class="form-group" style="flex:0 0 auto;">
+            <button class="btn btn-primary" id="btnSaveKey" onclick="saveApiKey()" style="height:42px;">Save Key</button>
+          </div>
+        </div>
+        <p style="font-size:12px;color:var(--text-4);margin-top:6px;">
+          Get your key at <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color:var(--accent);">console.anthropic.com</a>
+        </p>
+      </div>
+
+      <div class="card">
         <div class="card-title mb-16">Setup Guide &mdash; Step by Step</div>
 
         <div class="setup-step">

@@ -905,6 +905,34 @@ function toast(message, type = 'info') {
   }, 3500);
 }
 
+// ─── Settings: Save API Key ──────────────────────────────────────────────
+
+async function saveApiKey() {
+  const input = document.getElementById('inputApiKey');
+  const key = input.value.trim();
+  if (!key) { toast('Paste your API key first', 'error'); return; }
+
+  const btn = document.getElementById('btnSaveKey');
+  btn.disabled = true;
+  btn.textContent = 'Saving...';
+
+  try {
+    const data = await apiPost('/api/settings/apikey', { api_key: key });
+    if (data.status === 'ok') {
+      toast(data.message || 'API key saved!', 'success');
+      input.value = '';
+      checkServices();
+    } else {
+      toast(data.message || 'Failed to save', 'error');
+    }
+  } catch (e) {
+    toast('Error: ' + e.message, 'error');
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Save Key';
+}
+
 // ─── Utilities ───────────────────────────────────────────────────────────────
 
 function escapeHtml(text) {
