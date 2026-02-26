@@ -1,0 +1,38 @@
+# Web Framework
+flask>=3.0.0
+flask-cors>=4.0.0
+flask-socketio>=5.3.0
+gunicorn>=21.2.0
+
+# Reddit Scraping
+praw>=7.7.0
+
+# AI / Claude
+anthropic>=0.40.0
+
+# Text-to-Speech (Free, no API key)
+edge-tts>=6.1.0
+
+# Speech Recognition (word-level timestamps for captions)
+openai-whisper>=20231117
+whisper-timestamped>=1.14.0
+
+# Video Editing
+moviepy>=2.0.0
+Pillow>=10.0.0
+
+# YouTube Upload
+google-api-python-client>=2.100.0
+google-auth-oauthlib>=1.1.0
+google-auth-httplib2>=0.2.0
+
+# Cloudflare Tunnel
+flask-cloudflared>=0.0.5
+
+# Background Video Downloads
+yt-dlp>=2024.1.0
+
+# Utilities
+python-dotenv>=1.0.0
+requests>=2.31.0
+apscheduler>=3.10.0
