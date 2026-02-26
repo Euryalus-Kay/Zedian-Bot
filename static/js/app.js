@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   Viral Reddit Story Bot - Frontend Application
+   Viral Reddit Story Bot — Frontend
    ═══════════════════════════════════════════════════════════════════════════ */
 
 const API = '';
@@ -9,12 +9,18 @@ let currentScript = null;
 let lastGeneratedResult = null;
 let libraryFilter = 'all';
 
-// ─── Initialization ──────────────────────────────────────────────────────────
+// ─── Init ────────────────────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
   checkServices();
   loadVoices();
   loadBackgrounds();
+
+  // Track script changes for step indicator
+  const scriptEl = document.getElementById('scriptText');
+  if (scriptEl) {
+    scriptEl.addEventListener('input', updateCreateSteps);
+  }
 });
 
 // ─── Navigation ──────────────────────────────────────────────────────────────
@@ -28,10 +34,10 @@ function showPage(pageId) {
   if (page) page.classList.add('active');
   if (nav) nav.classList.add('active');
 
-  // Load page-specific data
   if (pageId === 'library') loadLibrary();
   if (pageId === 'backgrounds') loadBackgrounds();
   if (pageId === 'youtube') checkYouTubeStatus();
+  if (pageId === 'create') updateCreateSteps();
 
   // Close mobile sidebar
   document.getElementById('sidebar').classList.remove('open');
@@ -39,6 +45,26 @@ function showPage(pageId) {
 
 function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('open');
+}
+
+// ─── Create Page Step Indicator ──────────────────────────────────────────────
+
+function updateCreateSteps() {
+  const hasStory = selectedStory !== null;
+  const hasScript = (document.getElementById('scriptText')?.value || '').trim().length > 0;
+  const hasResult = lastGeneratedResult !== null;
+
+  const s1 = document.getElementById('step1');
+  const s2 = document.getElementById('step2');
+  const s3 = document.getElementById('step3');
+  if (!s1) return;
+
+  // Step 1: Script
+  s1.className = (hasScript || hasStory) ? 'step done' : 'step active';
+  // Step 2: Settings (active once script is ready)
+  s2.className = hasScript ? 'step done' : (hasStory ? 'step active' : 'step');
+  // Step 3: Generate
+  s3.className = hasResult ? 'step done' : (hasScript ? 'step active' : 'step');
 }
 
 // ─── API Helpers ─────────────────────────────────────────────────────────────
@@ -62,37 +88,34 @@ async function apiDelete(path) {
   return res.json();
 }
 
-// ─── Services Check ──────────────────────────────────────────────────────────
+// ─── Services ────────────────────────────────────────────────────────────────
 
 async function checkServices() {
   try {
-    const settings = await apiGet('/api/settings');
+    const s = await apiGet('/api/settings');
     const dot = document.getElementById('statusDot');
     const text = document.getElementById('statusText');
 
-    const reddit = settings.reddit_configured;
-    const claude = settings.claude_configured;
-    const youtube = settings.youtube_authenticated;
+    const reddit = s.reddit_configured;
+    const claude = s.claude_configured;
+    const youtube = s.youtube_authenticated;
 
-    // Status badges
-    setBadge('badgeReddit', reddit ? 'Connected' : 'Not Configured', reddit ? 'success' : 'warning');
-    setBadge('badgeClaude', claude ? 'Connected' : 'Not Configured', claude ? 'success' : 'warning');
-    setBadge('badgeYouTube', youtube ? 'Connected' : 'Not Connected', youtube ? 'success' : 'danger');
+    setBadge('badgeReddit', reddit ? 'Connected' : 'Not Set', reddit ? 'success' : 'warning');
+    setBadge('badgeClaude', claude ? 'Connected' : 'Not Set', claude ? 'success' : 'warning');
+    setBadge('badgeYouTube', youtube ? 'Connected' : 'Not Set', youtube ? 'success' : 'danger');
 
-    // Overall status
-    const allGood = reddit && claude;
-    if (allGood) {
+    if (reddit && claude) {
       dot.className = 'status-dot connected';
-      text.textContent = 'All services connected';
+      text.textContent = 'All connected';
     } else if (reddit || claude) {
       dot.className = 'status-dot partial';
-      text.textContent = 'Some services need setup';
+      text.textContent = 'Partial setup';
     } else {
       dot.className = 'status-dot';
-      text.textContent = 'Services need configuration';
+      text.textContent = 'Needs setup';
     }
   } catch (e) {
-    console.error('Failed to check services:', e);
+    console.error('Service check failed:', e);
   }
 }
 
@@ -121,17 +144,17 @@ async function scrapeStories() {
     if (data.status === 'ok') {
       currentStories = data.stories;
       renderStories(currentStories);
-      toast(`Found ${data.count} stories!`, 'success');
+      toast(`Found ${data.count} stories`, 'success');
       document.getElementById('btnRank').disabled = false;
     } else {
-      toast('Failed to scrape stories. Check Reddit API config.', 'error');
+      toast('Scrape failed. Check Reddit API config.', 'error');
     }
   } catch (e) {
-    toast('Error scraping stories: ' + e.message, 'error');
+    toast('Error: ' + e.message, 'error');
   }
 
   btn.disabled = false;
-  btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg> Scrape Stories';
+  btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg> Scrape';
 }
 
 async function loadCachedStories() {
@@ -143,17 +166,17 @@ async function loadCachedStories() {
       toast(`Loaded ${data.count} cached stories`, 'info');
       document.getElementById('btnRank').disabled = false;
     } else {
-      toast('No cached stories found.', 'info');
+      toast('No cached stories found', 'info');
     }
   } catch (e) {
-    toast('Failed to load cached stories.', 'error');
+    toast('Failed to load cache', 'error');
   }
 }
 
 async function rankStories() {
   const btn = document.getElementById('btnRank');
   btn.disabled = true;
-  btn.innerHTML = '<div class="spinner spinner-sm"></div> AI Ranking...';
+  btn.innerHTML = '<div class="spinner spinner-sm"></div> Ranking...';
 
   try {
     const data = await apiPost('/api/stories/rank', {
@@ -164,26 +187,26 @@ async function rankStories() {
     if (data.status === 'ok') {
       currentStories = data.stories;
       renderStories(currentStories, true);
-      toast(`Top ${data.count} stories ranked by viral potential!`, 'success');
+      toast(`Top ${data.count} ranked by viral potential`, 'success');
     }
   } catch (e) {
     toast('Ranking failed: ' + e.message, 'error');
   }
 
   btn.disabled = false;
-  btn.innerHTML = 'AI Rank Stories';
+  btn.innerHTML = 'AI Rank';
 }
 
 function renderStories(stories, ranked = false) {
   const container = document.getElementById('storyList');
   const countEl = document.getElementById('storyCount');
-  countEl.textContent = `${stories.length} stories loaded`;
+  countEl.textContent = `${stories.length} stories`;
 
   if (stories.length === 0) {
     container.innerHTML = `
       <div class="empty-state">
-        <h3>No stories found</h3>
-        <p>Try adjusting your search filters or check your Reddit API configuration.</p>
+        <h3>Nothing found</h3>
+        <p>Try different filters or check Reddit API config.</p>
       </div>`;
     return;
   }
@@ -199,7 +222,7 @@ function renderStories(stories, ranked = false) {
         <span>${formatNumber(story.num_comments)} comments</span>
         ${story.estimated_duration ? `<span>~${story.estimated_duration}s</span>` : ''}
       </div>
-      ${story.viral_reason ? `<div class="story-preview" style="color:var(--viral);font-weight:500;">${escapeHtml(story.viral_reason)}</div>` : ''}
+      ${story.viral_reason ? `<div class="story-preview" style="color:var(--pink);font-weight:500;">${escapeHtml(story.viral_reason)}</div>` : ''}
       <div class="story-preview">${escapeHtml(story.selftext.substring(0, 200))}...</div>
     </div>
   `).join('');
@@ -211,7 +234,6 @@ function selectStory(index) {
     c.classList.toggle('selected', i === index);
   });
 
-  // Update create page
   document.getElementById('selectedStoryPreview').innerHTML = `
     <div>
       <strong>${escapeHtml(selectedStory.title)}</strong>
@@ -223,10 +245,11 @@ function selectStory(index) {
     document.getElementById('videoTitle').value = selectedStory.hook;
   }
 
-  toast('Story selected! Go to Create to generate a video.', 'info');
+  updateCreateSteps();
+  toast('Story selected — go to Create Video', 'info');
 }
 
-// ─── Script Generation ───────────────────────────────────────────────────────
+// ─── Script ──────────────────────────────────────────────────────────────────
 
 async function generateScript() {
   if (!selectedStory) return;
@@ -240,13 +263,10 @@ async function generateScript() {
     if (data.status === 'ok') {
       currentScript = data.script;
       document.getElementById('scriptText').value = data.script.script;
-      if (data.script.title) {
-        document.getElementById('videoTitle').value = data.script.title;
-      }
-      if (data.script.tags) {
-        document.getElementById('videoTags').value = data.script.tags.join(', ');
-      }
-      toast('Script generated!', 'success');
+      if (data.script.title) document.getElementById('videoTitle').value = data.script.title;
+      if (data.script.tags) document.getElementById('videoTags').value = data.script.tags.join(', ');
+      updateCreateSteps();
+      toast('Script generated', 'success');
     }
   } catch (e) {
     toast('Script generation failed: ' + e.message, 'error');
@@ -261,7 +281,7 @@ async function generateScript() {
 async function generateVideo() {
   const scriptText = document.getElementById('scriptText').value.trim();
   if (!scriptText && !selectedStory) {
-    toast('Please select a story or write a script first.', 'error');
+    toast('Select a story or write a script first', 'error');
     return;
   }
 
@@ -290,7 +310,7 @@ async function generateVideo() {
       document.getElementById('genResult').classList.add('hidden');
       pollJobStatus(data.job_id, onVideoComplete);
     } else {
-      toast(data.message || 'Failed to start generation.', 'error');
+      toast(data.message || 'Generation failed', 'error');
       btn.disabled = false;
     }
   } catch (e) {
@@ -302,22 +322,22 @@ async function generateVideo() {
 function onVideoComplete(job) {
   const btn = document.getElementById('btnGenerate');
   btn.disabled = false;
-
   document.getElementById('genProgress').classList.add('hidden');
 
   if (job.status === 'complete' && job.result) {
     lastGeneratedResult = job.result;
-    const result = job.result;
+    const r = job.result;
 
     document.getElementById('genResult').classList.remove('hidden');
-    document.getElementById('previewVideo').src = `/api/output/${getFilename(result.video)}`;
-    document.getElementById('resultDuration').textContent = `${result.duration.toFixed(1)}s`;
-    document.getElementById('resultTitle').textContent = result.title || 'Untitled';
-    document.getElementById('resultFile').textContent = getFilename(result.video);
+    document.getElementById('previewVideo').src = `/api/output/${getFilename(r.video)}`;
+    document.getElementById('resultDuration').textContent = `${r.duration.toFixed(1)}s`;
+    document.getElementById('resultTitle').textContent = r.title || 'Untitled';
+    document.getElementById('resultFile').textContent = getFilename(r.video);
 
-    toast('Video generated successfully!', 'success');
+    updateCreateSteps();
+    toast('Video ready!', 'success');
   } else {
-    toast(job.message || 'Video generation failed.', 'error');
+    toast(job.message || 'Generation failed', 'error');
   }
 }
 
@@ -327,9 +347,7 @@ function downloadResult(type) {
   if (type === 'video') file = lastGeneratedResult.video;
   else if (type === 'audio') file = lastGeneratedResult.audio_only;
   else if (type === 'video_no_audio') file = lastGeneratedResult.video_no_audio;
-  if (file) {
-    window.open(`/api/output/${getFilename(file)}`, '_blank');
-  }
+  if (file) window.open(`/api/output/${getFilename(file)}`, '_blank');
 }
 
 // ─── Job Polling ─────────────────────────────────────────────────────────────
@@ -384,7 +402,6 @@ async function loadBackgrounds() {
     const bgGrid = document.getElementById('bgList');
     const bgSelect = document.getElementById('bgSelect');
 
-    // Update select dropdown
     bgSelect.innerHTML = '<option value="">Random</option>';
     for (const bg of data.backgrounds || []) {
       const opt = document.createElement('option');
@@ -393,22 +410,21 @@ async function loadBackgrounds() {
       bgSelect.appendChild(opt);
     }
 
-    // Update grid
     if (!data.backgrounds || data.backgrounds.length === 0) {
       bgGrid.innerHTML = `
         <div class="empty-state" style="grid-column:1/-1;">
-          <h3>No background videos</h3>
-          <p>Download some gameplay footage above to get started.</p>
+          <h3>No backgrounds</h3>
+          <p>Download gameplay footage above to get started.</p>
         </div>`;
       return;
     }
 
     bgGrid.innerHTML = data.backgrounds.map(bg => `
       <div class="bg-card">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5" style="margin-bottom:8px"><rect x="2" y="2" width="20" height="20" rx="2"/><path d="m10 8 6 4-6 4z"/></svg>
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="1.5" style="margin-bottom:8px"><rect x="2" y="2" width="20" height="20" rx="2"/><path d="m10 8 6 4-6 4z"/></svg>
         <div class="filename">${bg.filename}</div>
-        <div class="size">${bg.size_mb} MB - ${bg.type}</div>
-        <button class="btn btn-danger btn-sm mt-8" onclick="deleteBgVideo('${bg.filename}')">Delete</button>
+        <div class="size">${bg.size_mb} MB</div>
+        <button class="btn btn-danger btn-sm mt-8" onclick="deleteBgVideo('${bg.filename}')">Remove</button>
       </div>
     `).join('');
   } catch (e) {
@@ -431,14 +447,13 @@ async function downloadBgVideo() {
     });
 
     if (data.status === 'ok') {
-      toast('Download started in background...', 'info');
-      // Poll for completion
+      toast('Download started...', 'info');
       pollJobStatus(data.job_id, (job) => {
         if (job.status === 'complete') {
-          toast('Background video downloaded!', 'success');
+          toast('Background downloaded!', 'success');
           loadBackgrounds();
         } else {
-          toast(job.message || 'Download failed.', 'error');
+          toast(job.message || 'Download failed', 'error');
         }
         btn.disabled = false;
         btn.textContent = 'Download';
@@ -455,10 +470,10 @@ async function deleteBgVideo(filename) {
   if (!confirm(`Delete ${filename}?`)) return;
   try {
     await apiDelete(`/api/backgrounds/${filename}`);
-    toast('Background video deleted.', 'info');
+    toast('Deleted', 'info');
     loadBackgrounds();
   } catch (e) {
-    toast('Delete failed.', 'error');
+    toast('Delete failed', 'error');
   }
 }
 
@@ -482,7 +497,6 @@ function filterLibrary(type, tabEl) {
 
 function renderLibrary(files) {
   const container = document.getElementById('libraryList');
-
   const filtered = libraryFilter === 'all'
     ? files
     : files.filter(f => f.type === libraryFilter);
@@ -490,29 +504,29 @@ function renderLibrary(files) {
   if (filtered.length === 0) {
     container.innerHTML = `
       <div class="empty-state">
-        <h3>No files found</h3>
+        <h3>Empty</h3>
         <p>Generate a video to see it here.</p>
       </div>`;
     return;
   }
 
   container.innerHTML = filtered.map(f => `
-    <div class="card" style="padding:16px;">
+    <div class="card" style="padding:14px 18px;">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-12">
-          <div style="width:40px;height:40px;background:var(--bg-input);border-radius:8px;display:flex;align-items:center;justify-content:center;">
+          <div style="width:36px;height:36px;background:var(--bg-0);border-radius:8px;display:flex;align-items:center;justify-content:center;">
             ${getFileIcon(f.type)}
           </div>
           <div>
-            <div style="font-size:14px;font-weight:600;">${f.filename}</div>
-            <div class="text-sm text-muted">${f.size_mb} MB - ${new Date(f.created).toLocaleDateString()}</div>
+            <div style="font-size:13px;font-weight:600;">${f.filename}</div>
+            <div style="font-size:12px;color:var(--text-3);">${f.size_mb} MB &middot; ${new Date(f.created).toLocaleDateString()}</div>
           </div>
         </div>
-        <div class="flex gap-8">
+        <div class="flex gap-6">
           ${f.type === 'video' ? `<button class="btn btn-ghost btn-sm" onclick="previewFile('${f.filename}', '${f.type}')">Preview</button>` : ''}
           <a href="/api/output/${f.filename}" target="_blank" class="btn btn-ghost btn-sm">Download</a>
           <button class="btn btn-danger btn-sm btn-icon" onclick="deleteFile('${f.filename}')">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
           </button>
         </div>
       </div>
@@ -522,11 +536,11 @@ function renderLibrary(files) {
 
 function getFileIcon(type) {
   const icons = {
-    video: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2"/><path d="m10 8 6 4-6 4z"/></svg>',
-    audio: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>',
-    image: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>',
+    video: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2"/><path d="m10 8 6 4-6 4z"/></svg>',
+    audio: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>',
+    image: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>',
   };
-  return icons[type] || '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>';
+  return icons[type] || '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>';
 }
 
 function previewFile(filename, type) {
@@ -535,7 +549,7 @@ function previewFile(filename, type) {
   document.getElementById('modalTitle').textContent = filename;
 
   if (type === 'video') {
-    body.innerHTML = `<video src="/api/output/${filename}" controls style="width:100%;max-height:60vh;border-radius:8px;"></video>`;
+    body.innerHTML = `<video src="/api/output/${filename}" controls style="width:100%;max-height:60vh;border-radius:var(--radius-sm);"></video>`;
   } else if (type === 'audio') {
     body.innerHTML = `<audio src="/api/output/${filename}" controls style="width:100%;"></audio>`;
   }
@@ -547,10 +561,10 @@ async function deleteFile(filename) {
   if (!confirm(`Delete ${filename}?`)) return;
   try {
     await apiDelete(`/api/output/${filename}`);
-    toast('File deleted.', 'info');
+    toast('Deleted', 'info');
     loadLibrary();
   } catch (e) {
-    toast('Delete failed.', 'error');
+    toast('Delete failed', 'error');
   }
 }
 
@@ -567,7 +581,7 @@ async function checkYouTubeStatus() {
       document.getElementById('ytAuthCode').classList.add('hidden');
     }
   } catch (e) {
-    console.error('YouTube status check failed:', e);
+    console.error('YouTube check failed:', e);
   }
 }
 
@@ -581,7 +595,7 @@ async function youtubeAuth() {
     } else if (data.status === 'authenticated') {
       showYouTubeConnected(data);
     } else {
-      toast(data.message || 'Auth failed. Make sure client_secrets.json exists.', 'error');
+      toast(data.message || 'Auth failed. Check client_secrets.json.', 'error');
     }
   } catch (e) {
     toast('Auth error: ' + e.message, 'error');
@@ -590,10 +604,7 @@ async function youtubeAuth() {
 
 async function youtubeAuthCode() {
   const code = document.getElementById('ytCode').value.trim();
-  if (!code) {
-    toast('Please enter the authorization code.', 'error');
-    return;
-  }
+  if (!code) { toast('Enter the authorization code', 'error'); return; }
 
   try {
     const data = await apiPost('/api/youtube/auth', { auth_code: code });
@@ -601,7 +612,7 @@ async function youtubeAuthCode() {
       showYouTubeConnected(data);
       toast('YouTube connected!', 'success');
     } else {
-      toast(data.message || 'Auth failed.', 'error');
+      toast(data.message || 'Auth failed', 'error');
     }
   } catch (e) {
     toast('Auth error: ' + e.message, 'error');
@@ -627,7 +638,7 @@ async function loadYouTubeVideos() {
     const container = document.getElementById('ytVideoList');
 
     if (!data.videos || data.videos.length === 0) {
-      container.innerHTML = '<div class="empty-state"><p>No videos uploaded yet.</p></div>';
+      container.innerHTML = '<div class="empty-state"><p>No videos yet.</p></div>';
       return;
     }
 
@@ -636,7 +647,7 @@ async function loadYouTubeVideos() {
         ${v.thumbnail ? `<img src="${v.thumbnail}" alt="">` : ''}
         <div class="yt-video-info">
           <div class="title">${escapeHtml(v.title)}</div>
-          <div class="date">${new Date(v.published_at).toLocaleDateString()} - ${v.status}</div>
+          <div class="date">${new Date(v.published_at).toLocaleDateString()} &middot; ${v.status}</div>
         </div>
         <a href="${v.url}" target="_blank" class="btn btn-ghost btn-sm">View</a>
       </div>
@@ -647,28 +658,28 @@ async function loadYouTubeVideos() {
 }
 
 async function youtubeDisconnect() {
-  if (!confirm('Disconnect your YouTube account?')) return;
+  if (!confirm('Disconnect YouTube?')) return;
   try {
     await apiPost('/api/youtube/disconnect');
     document.getElementById('ytNotConnected').classList.remove('hidden');
     document.getElementById('ytConnected').classList.add('hidden');
-    toast('YouTube disconnected.', 'info');
+    toast('Disconnected', 'info');
     checkServices();
   } catch (e) {
-    toast('Disconnect failed.', 'error');
+    toast('Disconnect failed', 'error');
   }
 }
 
 async function uploadToYouTube() {
   if (!lastGeneratedResult) {
-    toast('No video to upload. Generate one first.', 'error');
+    toast('Generate a video first', 'error');
     return;
   }
 
   try {
     const status = await apiGet('/api/youtube/status');
     if (!status.authenticated) {
-      toast('Connect your YouTube account first (YouTube tab).', 'error');
+      toast('Connect YouTube first (YouTube tab)', 'error');
       return;
     }
 
@@ -680,16 +691,16 @@ async function uploadToYouTube() {
     });
 
     if (data.status === 'ok') {
-      toast('Upload started...', 'info');
+      toast('Uploading...', 'info');
       pollJobStatus(data.job_id, (job) => {
         if (job.status === 'success') {
           toast(`Uploaded! ${job.url}`, 'success');
         } else {
-          toast(job.message || 'Upload failed.', 'error');
+          toast(job.message || 'Upload failed', 'error');
         }
       });
     } else {
-      toast(data.message || 'Upload failed.', 'error');
+      toast(data.message || 'Upload failed', 'error');
     }
   } catch (e) {
     toast('Upload error: ' + e.message, 'error');
@@ -706,7 +717,7 @@ document.getElementById('modalOverlay').addEventListener('click', (e) => {
   if (e.target.id === 'modalOverlay') closeModal();
 });
 
-// ─── Toast Notifications ─────────────────────────────────────────────────────
+// ─── Toasts ──────────────────────────────────────────────────────────────────
 
 function toast(message, type = 'info') {
   const container = document.getElementById('toastContainer');
@@ -717,9 +728,9 @@ function toast(message, type = 'info') {
 
   setTimeout(() => {
     el.style.opacity = '0';
-    el.style.transform = 'translateX(100%)';
+    el.style.transform = 'translateY(8px) scale(0.96)';
     setTimeout(() => el.remove(), 300);
-  }, 4000);
+  }, 3500);
 }
 
 // ─── Utilities ───────────────────────────────────────────────────────────────

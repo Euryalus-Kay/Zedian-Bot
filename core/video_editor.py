@@ -175,7 +175,7 @@ class VideoEditor:
             try:
                 # Main text (bold with thick stroke)
                 txt_clip = TextClip(
-                    text=cap["text"].upper(),
+                    text=cap["text"],
                     font_size=Config.CAPTION_FONT_SIZE,
                     color=Config.CAPTION_COLOR,
                     font=Config.CAPTION_FONT,

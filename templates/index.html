@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Viral Reddit Story Bot</title>
+  <title>Viral Story Bot</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -23,21 +23,21 @@
   <nav class="sidebar" id="sidebar">
     <div class="sidebar-header">
       <h1>Viral Story Bot</h1>
-      <p>Reddit to Shorts Pipeline</p>
+      <p>Reddit to Shorts pipeline</p>
     </div>
 
     <div class="nav-items">
       <div class="nav-item active" data-page="discover" onclick="showPage('discover')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-        Discover Stories
+        Discover
       </div>
       <div class="nav-item" data-page="create" onclick="showPage('create')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 5 0 14M5 12h14"/></svg>
         Create Video
       </div>
       <div class="nav-item" data-page="library" onclick="showPage('library')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2"/><path d="m10 8 6 4-6 4z"/></svg>
-        Video Library
+        Library
       </div>
 
       <div class="nav-divider"></div>
@@ -59,7 +59,7 @@
     <div class="sidebar-footer">
       <div class="status-indicator">
         <div class="status-dot" id="statusDot"></div>
-        <span id="statusText">Checking services...</span>
+        <span id="statusText">Checking...</span>
       </div>
     </div>
   </nav>
@@ -70,25 +70,24 @@
     <!-- ═══ DISCOVER PAGE ═══ -->
     <div class="page active" id="page-discover">
       <div class="page-header">
-        <h2>Discover Viral Stories</h2>
-        <p>Scrape Reddit for the craziest, most viral stories and rank them with AI</p>
+        <h2>Discover Stories</h2>
+        <p>Find viral Reddit stories and rank them with AI</p>
       </div>
 
       <div class="card">
         <div class="card-header">
           <div>
             <div class="card-title">Scrape Reddit</div>
-            <div class="card-subtitle">Find stories across viral subreddits</div>
+            <div class="card-subtitle">Pull stories from top viral subreddits</div>
           </div>
           <button class="btn btn-primary" id="btnScrape" onclick="scrapeStories()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-            Scrape Stories
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            Scrape
           </button>
         </div>
-
         <div class="form-row-3">
           <div class="form-group">
-            <label class="form-label">Sort By</label>
+            <label class="form-label">Sort</label>
             <select class="form-select" id="scrapeSort">
               <option value="top">Top</option>
               <option value="hot">Hot</option>
@@ -97,17 +96,17 @@
             </select>
           </div>
           <div class="form-group">
-            <label class="form-label">Time Filter</label>
+            <label class="form-label">Time</label>
             <select class="form-select" id="scrapeTime">
-              <option value="day">Past 24 Hours</option>
+              <option value="day">24 Hours</option>
               <option value="week" selected>Past Week</option>
-              <option value="month">Past Month</option>
-              <option value="year">Past Year</option>
+              <option value="month">Month</option>
+              <option value="year">Year</option>
               <option value="all">All Time</option>
             </select>
           </div>
           <div class="form-group">
-            <label class="form-label">Limit per Sub</label>
+            <label class="form-label">Limit</label>
             <select class="form-select" id="scrapeLimit">
               <option value="5">5</option>
               <option value="10">10</option>
@@ -118,15 +117,11 @@
         </div>
       </div>
 
-      <div class="flex items-center justify-between mb-16">
-        <div>
-          <span class="text-sm text-muted" id="storyCount">No stories loaded</span>
-        </div>
-        <div class="flex gap-8">
+      <div class="toolbar">
+        <div class="toolbar-info" id="storyCount">No stories loaded</div>
+        <div class="toolbar-actions">
           <button class="btn btn-ghost btn-sm" onclick="loadCachedStories()">Load Cached</button>
-          <button class="btn btn-primary btn-sm" id="btnRank" onclick="rankStories()" disabled>
-            AI Rank Stories
-          </button>
+          <button class="btn btn-primary btn-sm" id="btnRank" onclick="rankStories()" disabled>AI Rank</button>
         </div>
       </div>
 
@@ -134,7 +129,7 @@
         <div class="empty-state">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
           <h3>No stories yet</h3>
-          <p>Click "Scrape Stories" to find viral Reddit stories, or load previously cached results.</p>
+          <p>Click Scrape to find viral Reddit stories, or load previously cached results.</p>
         </div>
       </div>
     </div>
@@ -143,37 +138,51 @@
     <div class="page" id="page-create">
       <div class="page-header">
         <h2>Create Video</h2>
-        <p>Turn a story into a viral short-form video with AI narration and captions</p>
+        <p>Turn a story into a short-form video with narration and captions</p>
+      </div>
+
+      <!-- Step indicators -->
+      <div class="steps">
+        <div class="step active" id="step1">
+          <div class="step-num">1</div>
+          Script
+        </div>
+        <div class="step" id="step2">
+          <div class="step-num">2</div>
+          Settings
+        </div>
+        <div class="step" id="step3">
+          <div class="step-num">3</div>
+          Generate
+        </div>
       </div>
 
       <div class="card">
-        <div class="card-title mb-16">Story & Script</div>
+        <div class="card-title mb-12">Story & Script</div>
         <div class="form-group">
           <label class="form-label">Selected Story</label>
-          <div id="selectedStoryPreview" class="form-input" style="min-height:44px;display:flex;align-items:center;color:var(--text-muted);">
-            Select a story from Discover, or write a custom script below
+          <div id="selectedStoryPreview" class="form-input" style="min-height:42px;display:flex;align-items:center;color:var(--text-3);">
+            Pick a story from Discover, or write your own script below
           </div>
         </div>
         <div class="form-group">
-          <label class="form-label">Script (AI-generated or custom)</label>
-          <textarea class="form-textarea" id="scriptText" rows="6" placeholder="The narration script will appear here after generating, or write your own..."></textarea>
+          <label class="form-label">Narration Script</label>
+          <textarea class="form-textarea" id="scriptText" rows="6" placeholder="The script will appear here after generating, or type your own..."></textarea>
         </div>
-        <div class="flex gap-8">
-          <button class="btn btn-ghost btn-sm" id="btnGenScript" onclick="generateScript()" disabled>
-            Generate Script with AI
-          </button>
-        </div>
+        <button class="btn btn-ghost btn-sm" id="btnGenScript" onclick="generateScript()" disabled>
+          Generate Script with AI
+        </button>
       </div>
 
       <div class="card">
-        <div class="card-title mb-16">Video Settings</div>
+        <div class="card-title mb-12">Video Settings</div>
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Voice</label>
             <select class="form-select" id="voiceSelect"></select>
           </div>
           <div class="form-group">
-            <label class="form-label">Background Video</label>
+            <label class="form-label">Background</label>
             <select class="form-select" id="bgSelect">
               <option value="">Random</option>
             </select>
@@ -181,26 +190,24 @@
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label">Video Title</label>
-            <input class="form-input" id="videoTitle" placeholder="Auto-generated if left blank">
+            <label class="form-label">Title</label>
+            <input class="form-input" id="videoTitle" placeholder="Auto-generated if blank">
           </div>
           <div class="form-group">
-            <label class="form-label">Tags (comma separated)</label>
+            <label class="form-label">Tags</label>
             <input class="form-input" id="videoTags" placeholder="reddit, storytime, viral">
           </div>
         </div>
       </div>
 
-      <div class="flex gap-12">
-        <button class="btn btn-primary" id="btnGenerate" onclick="generateVideo()">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
-          Generate Video
-        </button>
-      </div>
+      <button class="btn btn-primary" id="btnGenerate" onclick="generateVideo()" style="padding:11px 28px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 5 0 14M5 12h14"/></svg>
+        Generate Video
+      </button>
 
-      <!-- Generation Progress -->
-      <div class="card mt-24 hidden" id="genProgress">
-        <div class="card-title">Generating Video</div>
+      <!-- Progress -->
+      <div class="card mt-20 hidden" id="genProgress">
+        <div class="card-title">Generating...</div>
         <div class="progress-container">
           <div class="progress-bar">
             <div class="progress-fill" id="genProgressFill" style="width:0%"></div>
@@ -212,9 +219,9 @@
         </div>
       </div>
 
-      <!-- Result Preview -->
-      <div class="card mt-24 hidden" id="genResult">
-        <div class="card-title mb-16">Generated Video</div>
+      <!-- Result -->
+      <div class="card mt-20 hidden" id="genResult">
+        <div class="card-title mb-16">Your Video</div>
         <div class="video-preview-container">
           <div class="video-frame">
             <video id="previewVideo" controls></video>
@@ -233,18 +240,10 @@
               <span id="resultFile">-</span>
             </div>
             <div class="flex flex-col gap-8 mt-16">
-              <button class="btn btn-primary w-full" onclick="downloadResult('video')">
-                Download Video
-              </button>
-              <button class="btn btn-ghost w-full" onclick="downloadResult('audio')">
-                Download Audio Only
-              </button>
-              <button class="btn btn-ghost w-full" onclick="downloadResult('video_no_audio')">
-                Download Video (No Audio)
-              </button>
-              <button class="btn btn-success w-full" onclick="uploadToYouTube()">
-                Upload to YouTube
-              </button>
+              <button class="btn btn-primary w-full" onclick="downloadResult('video')">Download Video</button>
+              <button class="btn btn-ghost w-full" onclick="downloadResult('audio')">Audio Only</button>
+              <button class="btn btn-ghost w-full" onclick="downloadResult('video_no_audio')">Video (No Audio)</button>
+              <button class="btn btn-success w-full" onclick="uploadToYouTube()">Upload to YouTube</button>
             </div>
           </div>
         </div>
@@ -254,8 +253,8 @@
     <!-- ═══ LIBRARY PAGE ═══ -->
     <div class="page" id="page-library">
       <div class="page-header">
-        <h2>Video Library</h2>
-        <p>View and manage all generated videos, audio, and assets</p>
+        <h2>Library</h2>
+        <p>All your generated videos, audio, and assets</p>
       </div>
 
       <div class="tabs">
@@ -268,7 +267,7 @@
       <div id="libraryList">
         <div class="loading-overlay">
           <div class="spinner"></div>
-          Loading files...
+          Loading...
         </div>
       </div>
     </div>
@@ -276,8 +275,8 @@
     <!-- ═══ BACKGROUNDS PAGE ═══ -->
     <div class="page" id="page-backgrounds">
       <div class="page-header">
-        <h2>Background Videos</h2>
-        <p>Manage gameplay footage used as video backgrounds</p>
+        <h2>Backgrounds</h2>
+        <p>Gameplay footage used as video backgrounds</p>
       </div>
 
       <div class="card">
@@ -292,22 +291,22 @@
               <option value="minecraft_parkour">Minecraft Parkour</option>
               <option value="subway_surfers">Subway Surfers</option>
               <option value="gta_driving">GTA Driving</option>
-              <option value="satisfying">Satisfying Compilation</option>
-              <option value="cooking">Cooking Compilation</option>
+              <option value="satisfying">Satisfying</option>
+              <option value="cooking">Cooking</option>
             </select>
           </div>
           <div class="form-group">
-            <label class="form-label">Or paste YouTube URL</label>
+            <label class="form-label">Or paste URL</label>
             <input class="form-input" id="bgUrl" placeholder="https://youtube.com/watch?v=...">
           </div>
         </div>
       </div>
 
-      <div class="card-title mb-16">Available Backgrounds</div>
+      <div class="card-title mb-12">Available</div>
       <div id="bgList" class="bg-grid">
         <div class="loading-overlay">
           <div class="spinner"></div>
-          Loading backgrounds...
+          Loading...
         </div>
       </div>
     </div>
@@ -315,34 +314,33 @@
     <!-- ═══ YOUTUBE PAGE ═══ -->
     <div class="page" id="page-youtube">
       <div class="page-header">
-        <h2>YouTube Manager</h2>
-        <p>Connect your YouTube account to auto-post videos</p>
+        <h2>YouTube</h2>
+        <p>Connect your channel and upload directly</p>
       </div>
 
       <!-- Not Connected -->
       <div id="ytNotConnected" class="card">
-        <div class="text-center" style="padding:32px 0;">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5" style="margin-bottom:16px"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58A2.78 2.78 0 0 0 3.4 19.6C5.12 20 12 20 12 20s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-1.96A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z"/><path d="m9.75 15.02 5.75-3.27-5.75-3.27v6.54z"/></svg>
-          <h3 style="color:var(--text-secondary);margin-bottom:8px;">YouTube Not Connected</h3>
-          <p class="text-sm text-muted" style="margin-bottom:20px;">
-            Connect your YouTube account to upload videos directly.<br>
-            You need a client_secrets.json from Google Cloud Console.
+        <div class="text-center" style="padding:36px 0;">
+          <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="1.5" style="margin-bottom:16px"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58A2.78 2.78 0 0 0 3.4 19.6C5.12 20 12 20 12 20s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-1.96A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z"/><path d="m9.75 15.02 5.75-3.27-5.75-3.27v6.54z"/></svg>
+          <h3 style="color:var(--text-2);margin-bottom:6px;font-size:15px;">Not Connected</h3>
+          <p class="text-sm text-muted" style="margin-bottom:20px;max-width:340px;margin-left:auto;margin-right:auto;">
+            Connect your YouTube account to upload videos directly. Requires a client_secrets.json from Google Cloud Console.
           </p>
-          <button class="btn btn-primary" onclick="youtubeAuth()">Connect YouTube Account</button>
+          <button class="btn btn-primary" onclick="youtubeAuth()">Connect YouTube</button>
         </div>
       </div>
 
-      <!-- Auth Code Input -->
+      <!-- Auth Code -->
       <div id="ytAuthCode" class="card hidden">
-        <div class="card-title mb-16">Enter Authorization Code</div>
+        <div class="card-title mb-12">Enter Authorization Code</div>
         <p class="text-sm text-muted mb-16">
-          A browser window should have opened. Sign in with your YouTube account and paste the authorization code below.
+          A browser window should have opened. Sign in and paste the authorization code below.
         </p>
         <div class="form-group">
-          <label class="form-label">Authorization Code</label>
-          <input class="form-input" id="ytCode" placeholder="Paste your auth code here">
+          <label class="form-label">Code</label>
+          <input class="form-input" id="ytCode" placeholder="Paste auth code here">
         </div>
-        <button class="btn btn-primary" onclick="youtubeAuthCode()">Complete Authentication</button>
+        <button class="btn btn-primary" onclick="youtubeAuthCode()">Complete</button>
       </div>
 
       <!-- Connected -->
@@ -350,12 +348,11 @@
         <div class="card">
           <div class="card-header">
             <div>
-              <div class="card-title" id="ytChannelName">Channel Name</div>
-              <div class="card-subtitle">Connected YouTube Account</div>
+              <div class="card-title" id="ytChannelName">Channel</div>
+              <div class="card-subtitle">Connected</div>
             </div>
             <button class="btn btn-danger btn-sm" onclick="youtubeDisconnect()">Disconnect</button>
           </div>
-
           <div class="yt-stats">
             <div class="yt-stat">
               <div class="value" id="ytSubs">0</div>
@@ -363,7 +360,7 @@
             </div>
             <div class="yt-stat">
               <div class="value" id="ytViews">0</div>
-              <div class="label">Total Views</div>
+              <div class="label">Views</div>
             </div>
             <div class="yt-stat">
               <div class="value" id="ytVideos">0</div>
@@ -378,9 +375,7 @@
             <button class="btn btn-ghost btn-sm" onclick="loadYouTubeVideos()">Refresh</button>
           </div>
           <div id="ytVideoList" class="yt-video-list">
-            <div class="empty-state">
-              <p>No videos uploaded yet.</p>
-            </div>
+            <div class="empty-state"><p>No videos uploaded yet.</p></div>
           </div>
         </div>
       </div>
@@ -390,49 +385,45 @@
     <div class="page" id="page-settings">
       <div class="page-header">
         <h2>Settings</h2>
-        <p>Configure your bot and API connections</p>
+        <p>API connections and configuration</p>
       </div>
 
       <div class="card">
-        <div class="card-title mb-16">Service Status</div>
-        <div class="flex flex-col gap-12">
-          <div class="flex items-center justify-between">
-            <span>Reddit API</span>
-            <span class="badge" id="badgeReddit">Checking...</span>
-          </div>
-          <div class="flex items-center justify-between">
-            <span>Claude AI</span>
-            <span class="badge" id="badgeClaude">Checking...</span>
-          </div>
-          <div class="flex items-center justify-between">
-            <span>YouTube API</span>
-            <span class="badge" id="badgeYouTube">Checking...</span>
-          </div>
-          <div class="flex items-center justify-between">
-            <span>TTS Engine (edge-tts)</span>
-            <span class="badge badge-success">Always Available</span>
-          </div>
+        <div class="card-title mb-16">Services</div>
+        <div class="service-row">
+          <span>Reddit API</span>
+          <span class="badge" id="badgeReddit">Checking...</span>
+        </div>
+        <div class="service-row">
+          <span>Claude AI</span>
+          <span class="badge" id="badgeClaude">Checking...</span>
+        </div>
+        <div class="service-row">
+          <span>YouTube</span>
+          <span class="badge" id="badgeYouTube">Checking...</span>
+        </div>
+        <div class="service-row">
+          <span>TTS Engine</span>
+          <span class="badge badge-success">Always Available</span>
         </div>
       </div>
 
       <div class="card">
         <div class="card-title mb-16">Setup Guide</div>
-        <div class="text-sm" style="color:var(--text-secondary);line-height:1.8;">
-          <p><strong>1. Reddit API:</strong> Go to <a href="https://www.reddit.com/prefs/apps" target="_blank" style="color:var(--accent)">reddit.com/prefs/apps</a>, create a "script" app, and add credentials to your .env file.</p>
-          <p class="mt-8"><strong>2. Claude API:</strong> Get an API key from <a href="https://console.anthropic.com/" target="_blank" style="color:var(--accent)">console.anthropic.com</a> and add it to your .env file.</p>
-          <p class="mt-8"><strong>3. YouTube API:</strong> Create a project in <a href="https://console.cloud.google.com/" target="_blank" style="color:var(--accent)">Google Cloud Console</a>, enable the YouTube Data API v3, create OAuth credentials, and download client_secrets.json to the project root.</p>
-          <p class="mt-8"><strong>4. Background Videos:</strong> Go to the Backgrounds tab and download at least one gameplay video.</p>
-          <p class="mt-8"><strong>5. Cloudflare Tunnel (optional):</strong> Set <code style="background:var(--bg-input);padding:2px 6px;border-radius:4px;">CLOUDFLARE_TUNNEL=true</code> in .env for public access.</p>
-        </div>
+        <div class="setup-step"><strong>1. Reddit API</strong> &mdash; Go to <a href="https://www.reddit.com/prefs/apps" target="_blank">reddit.com/prefs/apps</a>, create a "script" app, add your client ID and secret to the <code>.env</code> file.</div>
+        <div class="setup-step"><strong>2. Claude AI</strong> &mdash; Get an API key from <a href="https://console.anthropic.com/" target="_blank">console.anthropic.com</a> and add it to <code>.env</code>.</div>
+        <div class="setup-step"><strong>3. YouTube</strong> &mdash; Create a project in <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a>, enable YouTube Data API v3, download <code>client_secrets.json</code> to project root.</div>
+        <div class="setup-step"><strong>4. Backgrounds</strong> &mdash; Go to the Backgrounds tab and download at least one gameplay video.</div>
+        <div class="setup-step"><strong>5. Tunnel</strong> (optional) &mdash; Set <code>CLOUDFLARE_TUNNEL=true</code> in .env for public access.</div>
       </div>
 
       <div class="card">
-        <div class="card-title mb-16">Environment Configuration</div>
-        <p class="text-sm text-muted mb-16">Copy .env.example to .env and fill in your credentials:</p>
-        <pre style="background:var(--bg-input);padding:16px;border-radius:var(--radius-sm);font-size:12px;overflow-x:auto;color:var(--text-secondary);line-height:1.8;">REDDIT_CLIENT_ID=your_client_id
+        <div class="card-title mb-12">Environment File</div>
+        <p class="text-sm text-muted mb-12">Copy <code>.env.example</code> to <code>.env</code> and fill in:</p>
+        <pre class="env-block">REDDIT_CLIENT_ID=your_client_id
 REDDIT_CLIENT_SECRET=your_client_secret
-ANTHROPIC_API_KEY=your_anthropic_api_key
-FLASK_SECRET_KEY=random-secret-string
+ANTHROPIC_API_KEY=your_api_key
+FLASK_SECRET_KEY=random-secret
 CLOUDFLARE_TUNNEL=false</pre>
       </div>
     </div>
@@ -440,14 +431,14 @@ CLOUDFLARE_TUNNEL=false</pre>
   </main>
 </div>
 
-<!-- Toast Container -->
+<!-- Toasts -->
 <div class="toast-container" id="toastContainer"></div>
 
-<!-- Script Modal (reusable) -->
+<!-- Modal -->
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal">
     <div class="modal-header">
-      <div class="modal-title" id="modalTitle">Modal</div>
+      <div class="modal-title" id="modalTitle">Preview</div>
       <button class="modal-close" onclick="closeModal()">&times;</button>
     </div>
     <div id="modalBody"></div>
