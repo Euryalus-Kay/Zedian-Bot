@@ -14,6 +14,7 @@ let libraryFilter = 'all';
 
 document.addEventListener('DOMContentLoaded', () => {
   checkServices();
+  checkTunnelOnLoad();
   loadVoices();
   loadBackgrounds();
 
@@ -903,6 +904,101 @@ function toast(message, type = 'info') {
     el.style.transform = 'translateY(8px) scale(0.96)';
     setTimeout(() => el.remove(), 300);
   }, 3500);
+}
+
+// ─── Cloudflare Tunnel ───────────────────────────────────────────────────
+
+async function startTunnel() {
+  const btn = document.getElementById('btnStartTunnel');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner spinner-sm"></div> Starting...';
+
+  try {
+    await apiPost('/api/tunnel/start');
+    pollTunnelUrl();
+  } catch (e) {
+    toast('Failed to start tunnel: ' + e.message, 'error');
+    btn.disabled = false;
+    btn.innerHTML = 'Start Tunnel';
+  }
+}
+
+function pollTunnelUrl() {
+  let attempts = 0;
+  const interval = setInterval(async () => {
+    attempts++;
+    try {
+      const data = await apiGet('/api/tunnel/status');
+      if (data.url) {
+        clearInterval(interval);
+        showTunnelRunning(data.url);
+        toast('Tunnel live! Public URL ready.', 'success');
+      } else if (attempts > 20) {
+        clearInterval(interval);
+        toast('Tunnel started but no URL yet. Check if cloudflared is installed.', 'error');
+        resetTunnelBtn();
+      }
+    } catch (e) {
+      clearInterval(interval);
+      resetTunnelBtn();
+    }
+  }, 1500);
+}
+
+function showTunnelRunning(url) {
+  document.getElementById('tunnelStopped').classList.add('hidden');
+  document.getElementById('tunnelRunning').classList.remove('hidden');
+  document.getElementById('tunnelUrl').textContent = url;
+  document.getElementById('tunnelUrl').href = url;
+
+  // Show in sidebar
+  const sidebarTunnel = document.getElementById('sidebarTunnel');
+  const sidebarUrl = document.getElementById('sidebarTunnelUrl');
+  if (sidebarTunnel) {
+    sidebarTunnel.classList.remove('hidden');
+    sidebarUrl.textContent = url;
+    sidebarUrl.href = url;
+  }
+}
+
+function resetTunnelBtn() {
+  document.getElementById('tunnelStopped').classList.remove('hidden');
+  document.getElementById('tunnelRunning').classList.add('hidden');
+  const btn = document.getElementById('btnStartTunnel');
+  btn.disabled = false;
+  btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> Start Tunnel';
+
+  // Hide from sidebar
+  const sidebarTunnel = document.getElementById('sidebarTunnel');
+  if (sidebarTunnel) sidebarTunnel.classList.add('hidden');
+}
+
+async function stopTunnel() {
+  try {
+    await apiPost('/api/tunnel/stop');
+    resetTunnelBtn();
+    toast('Tunnel stopped', 'info');
+  } catch (e) {
+    toast('Stop failed: ' + e.message, 'error');
+  }
+}
+
+function copyTunnelUrl() {
+  const url = document.getElementById('tunnelUrl').textContent;
+  navigator.clipboard.writeText(url).then(() => {
+    toast('URL copied!', 'success');
+  }).catch(() => {
+    toast('Copy failed — select and copy manually', 'error');
+  });
+}
+
+async function checkTunnelOnLoad() {
+  try {
+    const data = await apiGet('/api/tunnel/status');
+    if (data.running && data.url) {
+      showTunnelRunning(data.url);
+    }
+  } catch (e) { /* ignore */ }
 }
 
 // ─── Settings: Save API Key ──────────────────────────────────────────────

@@ -3,6 +3,8 @@
 import json
 import logging
 import os
+import re
+import subprocess
 import threading
 import uuid
 from datetime import datetime, timezone
@@ -43,6 +45,10 @@ yt_uploader = YouTubeUploader()
 
 # Job tracking
 jobs: dict[str, dict] = {}
+
+# Cloudflare Tunnel
+tunnel_process: subprocess.Popen | None = None
+tunnel_url: str | None = None
 
 # Ensure directories exist
 os.makedirs(Config.OUTPUT_DIR, exist_ok=True)
@@ -566,6 +572,69 @@ def youtube_disconnect():
     return jsonify({"status": "ok"})
 
 
+# ─── Cloudflare Tunnel ────────────────────────────────────────────────────
+
+
+def _start_tunnel_bg():
+    """Start cloudflared tunnel in background and capture the public URL."""
+    global tunnel_process, tunnel_url
+    try:
+        tunnel_process = subprocess.Popen(
+            ["cloudflared", "tunnel", "--url", f"http://localhost:{Config.PORT}"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        # cloudflared writes the URL to stderr
+        for line in tunnel_process.stderr:
+            decoded = line.decode("utf-8", errors="ignore")
+            match = re.search(r"https://[a-z0-9-]+\.trycloudflare\.com", decoded)
+            if match:
+                tunnel_url = match.group(0)
+                logger.info("Cloudflare tunnel URL: %s", tunnel_url)
+                break
+    except FileNotFoundError:
+        logger.error("cloudflared not found. Install it: https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/")
+        tunnel_process = None
+    except Exception as e:
+        logger.error("Tunnel failed: %s", e)
+        tunnel_process = None
+
+
+@app.route("/api/tunnel/start", methods=["POST"])
+def start_tunnel():
+    """Start a Cloudflare Tunnel to get a public URL."""
+    global tunnel_process, tunnel_url
+    if tunnel_process and tunnel_process.poll() is None:
+        return jsonify({"status": "ok", "url": tunnel_url, "running": True})
+
+    tunnel_url = None
+    threading.Thread(target=_start_tunnel_bg, daemon=True).start()
+    return jsonify({"status": "ok", "message": "Tunnel starting..."})
+
+
+@app.route("/api/tunnel/stop", methods=["POST"])
+def stop_tunnel():
+    """Stop the Cloudflare Tunnel."""
+    global tunnel_process, tunnel_url
+    if tunnel_process:
+        tunnel_process.terminate()
+        try:
+            tunnel_process.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            tunnel_process.kill()
+        tunnel_process = None
+        tunnel_url = None
+        logger.info("Cloudflare tunnel stopped.")
+    return jsonify({"status": "ok"})
+
+
+@app.route("/api/tunnel/status")
+def tunnel_status():
+    """Get current tunnel status and URL."""
+    running = tunnel_process is not None and tunnel_process.poll() is None
+    return jsonify({"running": running, "url": tunnel_url})
+
+
 # ─── Settings ─────────────────────────────────────────────────────────────────
 
 @app.route("/api/settings")
@@ -648,13 +717,10 @@ def _get_file_type(filename: str) -> str:
 # ─── Main ─────────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
+    # Auto-start Cloudflare tunnel if enabled in .env
     if Config.CLOUDFLARE_TUNNEL:
-        try:
-            from flask_cloudflared import run_with_cloudflared
-            run_with_cloudflared(app)
-            logger.info("Cloudflare tunnel enabled.")
-        except ImportError:
-            logger.warning("flask-cloudflared not installed. Running without tunnel.")
+        logger.info("CLOUDFLARE_TUNNEL=true — starting tunnel...")
+        threading.Thread(target=_start_tunnel_bg, daemon=True).start()
 
     app.run(
         host="0.0.0.0",
